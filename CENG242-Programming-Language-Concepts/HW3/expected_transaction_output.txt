@@ -1,0 +1,31 @@
+./Test
+*****Transaction Constructor Test*****
+*****Stream Overload Test*****
+1	-	13:12:39-13/5/2019
+2	-	23:59:59-30/12/2019
+3	-	13:12:41-13/5/2019
+*****Copy Constructor Test*****
+1	-	13:12:39-13/5/2019
+*****Assignment Operator Overload Test*****
+**Empty Constructed Transaction**
+1	-	13:12:39-13/5/2019
+**non-Empty Constructed Transaction**
+100	-	23:59:59-30/12/2019
+1	-	13:12:39-13/5/2019
+*****Smaller Than Another Transaction Test*****
+tra1 earlier than tra2
+tra1 earlier than tra3
+*****Smaller Than Another Date Test*****
+tra1 earlier than some_date2_time
+tra1 earlier than some_date3_time
+*****Bigger Than Another Transaction Test*****
+tra2 later than tra1
+tra3 later than tra1
+*****Bigger Than Another Date Test*****
+tra2 later than some_date_time
+tra3 later than some_date_time
+*****Plus Overload Test*****
+**with Two Transaction**
+3
+**with a Transaction and a Double**
+11
