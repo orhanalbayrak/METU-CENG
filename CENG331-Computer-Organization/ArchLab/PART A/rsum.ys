@@ -1,0 +1,67 @@
+#ORHAN ALBAYRAK
+#2264471
+
+.pos 0x1000
+
+Stack:
+
+	.pos 0 					# Execution should start from zero
+
+
+init:
+#Make rsp and rbp initialization 
+	irmovq 	Stack,%rsp  			# rsp setup
+	irmovq	Stack,%rbp			# rbp setup
+	call	Main				# The Main function is started 
+	halt					# Execution is finished	
+
+.align 8					# In 64 bit align is 8 for quadword	
+
+ele1:
+	.quad 0x00a
+	.quad ele2
+ele2:
+	.quad 0x0b0
+	.quad ele3
+ele3:
+	.quad 0xc00
+	.quad 0
+
+
+
+Main:	#Define Main structure 
+	pushq 	%rbp 				# rbp(base pointer) is pushed into Stack
+	rrmovq 	%rsp,%rbp			# Move rsp(stack pointer) into rbp to save frame  value before call function
+	irmovq 	$8,%rax				# The constant value 8 is assigned to rax 
+	pushq 	%rax				# rax(constant value 8) is pushed into Stack
+	irmovq 	ele1,%rdx			# The ele1's(beggining of list) adress is assigned to rdx register
+	pushq 	%rdx      			# Pushing rdx register for moving array adress into stack
+	call 	rsum_list			# I am calling the rsum_list after passing arguments to this function
+	rrmovq 	%rbp,%rsp			# I update rsp register as a value of rbp
+	popq 	%rbp				# Before the return rbp is pop
+ret 						
+
+rsum_list:
+	pushq	%rbp				# Pushing Rbp register to determine frame base
+	rrmovq	%rsp, %rbp 			# Move rsp(stack pointer) into rbp
+	pushq	%rbx				# Pushing rbx register into stack
+	mrmovq	16(%rbp), %rdx			# rdx as pointer to determine node adress
+	pushq   %rdi              		# Pushing rdi register into stack 
+	irmovq  $8,%rdi         		# move 8 in rdi
+	subq	%rdi, %rsp			# extend rsp value by 8  due to pushing value
+	irmovq	$0, %rax			# initialize return value as 0 (empty list)
+	andq	%rdx, %rdx			# check if rdx is NULL.  
+	je	Done				# if list is empty then jump to done
+	mrmovq	(%rdx), %rbx			# move rdx* ->rcx
+	mrmovq	8(%rdx), %rax			# assigning the value of node to rax register
+	rmmovq	%rax, (%rsp)			# movimg rax value to bottom of stack 
+	call	rsum_list			# calling with next node 
+	addq %rbx, %rax				# adding actual return value and return value of recursive function 
+
+Done:
+	addq	%rdi, %rsp			# Update rsp value back
+	popq    %rdi				# Finish after all rec calls and  pop calee-seaved registers from stack 	
+	popq	%rbx
+	popq    %rbp
+	ret					# Finish execution and return
+

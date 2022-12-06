@@ -1,0 +1,63 @@
+#ORHAN ALBAYRAK
+#2264471
+
+	.pos 0x1000
+
+Stack:
+#Where execution should start
+	.pos 0 					# Execution should start from zero
+
+
+init:
+#Make rsp and rbp initialization 
+	irmovq 	Stack,%rsp	  		# rsp setup
+	irmovq	Stack,%rbp			# rbp setup
+	call	Main				# The Main function is started
+	halt					# Execution is finished		
+
+
+.align 8					# In 64 bit align is 8 for quadword	
+
+ele1:
+	.quad 0x00a
+	.quad ele2
+ele2:
+	.quad 0x0b0
+	.quad ele3
+ele3:
+	.quad 0xc00
+	.quad 0
+
+
+Main:	#Define Main structure 
+	pushq 	%rbp 				# rbp(base pointer) is pushed into Stack 
+	rrmovq 	%rsp,%rbp			# move rsp into rbp to save frame  value before call function
+	irmovq 	$8,%rax				# The constant value 8 is assigned to rax 
+	pushq 	%rax				# rax(constant value 8) is pushed into Stack
+	irmovq 	ele1,%rdx			# The ele1's(beggining of list) adress is assigned to rdx register
+	pushq 	%rdx      			# Pushing rdx register for moving array adress into stack
+	call 	sum_list			# I am calling the rsum_list after passing arguments to this function
+	rrmovq 	%rbp,%rsp			# I update rsp register as a value of rbp
+	popq 	%rbp				# Before the return rbp is pop 
+	ret 					# End Main
+
+
+sum_list:
+	pushq	%rbp				# Pushing Rbp register to determine frame base
+	rrmovq	%rsp,%rbp			# Move rsp(stack pointer) into rbp
+	mrmovq	16(%rbp),%rdx			# rdx is used as pointer to use as iterator
+	pushq   %rcx				# push rcx register into stack 
+	irmovq	$0,%rax				# sum is rax  which is zero in initial value
+	andq	%rdx,%rdx			# check if rdx is NULL
+	je	Done
+Loop:	
+	mrmovq  (%rdx),%rcx			# move rdx* ->rcx
+	addq	%rcx,%rax			# move rcx value is added to rax(sum) 
+	mrmovq	8(%rdx),%rdx			# move rdx pointer into next one
+	andq	%rdx,%rdx			# if rdx is NULL End loop
+	jne	Loop
+Done:
+	popq    %rcx				# Finish after loop and  pop calee-seaved registers from stack 
+	popq    %rbp              		# Finish execution and return
+	ret 		
+	

@@ -1,0 +1,170 @@
+#/* $begin ncopy-ys */
+##################################################################
+# ncopy.ys - Copy a src block of len words to dst.
+# Return the number of positive words (>0) contained in src.
+#
+# Include your name and ID here.
+#
+#ORHAN ALBAYRAK
+#2264471
+#
+# use loop unrolling 8 times
+# mrmovq instruction  with valC to reduce the instructions by trying to update src and dst values
+# use iaddq to reduce the number of instructions
+# use the CC set by iaddq to reduce some "andq"s
+# I tried using conditional-move instead of conditional-jump, but it didn't work well
+# in the loop, move 2 elements together to reduce bubbles (data dependence)
+# 
+#
+#
+# Describe how and why you modified the baseline code.
+#
+##################################################################
+# Do not modify this portion
+# Function prologue.
+# %rdi = src, %rsi = dst, %rdx = len
+ncopy:
+
+##################################################################
+# You can modify this portion
+	# Loop header
+	irmovq $0,%rax			# count is assigned as zero
+	iaddq  $-7,%rdx     		# len-=7
+	#andq %rdx,%rdx			# len <= 0?       #if init_len < 8
+	jle Remaining			# if so, jump to Remaining:
+
+Loop:	
+	mrmovq (%rdi), %rbx		# value is read from src (moving two elements together to reduce bubbles)
+	mrmovq 8(%rdi), %rcx 		# value is read from src
+	rmmovq %rbx, (%rsi)		# then it is stored to dst
+	rmmovq %rcx, 8(%rsi) 		# then it is stored dst
+	andq %rbx, %rbx			# if value greater than zero
+	jle   N_1			# jump to N_1
+	iaddq $1, %rax			# increase count
+N_1:
+	andq %rcx, %rcx			# if value greater than zero
+	jle   N_2			# jump to N_2
+	iaddq $1, %rax			# coincrease count
+N_2:
+	mrmovq 16(%rdi), %rbx		# value is read from src 
+	mrmovq 24(%rdi), %rcx		# value is read from src 
+	rmmovq %rbx, 16(%rsi)		# then it is stored to dst
+	rmmovq %rcx, 24(%rsi)		# then it is stored to dst
+	andq %rbx, %rbx			# if value greater than zero
+	jle   N_3			# jump to N_3
+	iaddq $1, %rax			# increase count
+N_3:
+	andq %rcx, %rcx			# if value greater than zero
+	jle   N_4			# jump to N_4
+	iaddq $1, %rax			# increase count
+N_4:
+	mrmovq 32(%rdi), %rbx		# value is read from src
+	mrmovq 40(%rdi), %rcx		# value is read from src
+	rmmovq %rbx, 32(%rsi)		# then it is stored to dst
+	rmmovq %rcx, 40(%rsi)		# then it is stored to dst
+	andq %rbx, %rbx			# if value greater than zero
+	jle   N_5			# jump to N_5
+	iaddq $1, %rax			# increase count
+N_5:
+	andq %rcx, %rcx			# if value greater than zero
+	jle   N_6			# jump to N_6
+	iaddq $1, %rax			# increase count
+N_6:
+	mrmovq 48(%rdi), %rbx		# value is read from src
+	mrmovq 56(%rdi), %rcx		# value is read from src
+	rmmovq %rbx, 48(%rsi)		# then it is stored to dst
+	rmmovq %rcx, 56(%rsi)		# then it is stored to dst
+	andq %rbx, %rbx			# if value greater than zero
+	jle   N_7			# jump to N_7
+	iaddq $1, %rax			# increase count
+N_7:
+	andq %rcx, %rcx			# if value greater than zero
+	jle   N_8			# jump to N_8
+	iaddq $1, %rax			# increase count
+N_8:
+	iaddq $64, %rdi			# src+=8(*4)
+	iaddq $64, %rsi			# dst+=8(*4)
+	iaddq $-8, %rdx			# len-=8
+	#andq %rdx,%rdx			# is len greater than zero
+	jg Loop				# if so, jump to Loop
+
+Remaining:                              # deal with remaining elements
+	iaddq  $7, %rdx     		# len+=7     #restore the init_len
+	#andq   %rdx, %rdx  		# if len<=0
+	jle Done           		# jump to Done
+
+	mrmovq (%rdi), %rbx		# value is read from src
+	rmmovq %rbx, (%rsi)		# then it is stored to dst
+	andq %rbx, %rbx			# if value greater than zero
+	jle  N_9			# jump to N_9
+	iaddq $1, %rax			# increase count
+N_9:
+	iaddq $-1, %rdx			# decrease len
+	#andq %rdx, %rdx    		#if len greater than zero
+	jle  Done			# jump to Done
+
+	mrmovq 8(%rdi), %rbx		# value is read from src
+	rmmovq %rbx, 8(%rsi)		# then it is stored to dst
+	andq %rbx, %rbx			# if value greater than zero
+	jle  N_10 			# jump to N_10
+	iaddq $1, %rax			# increase count
+N_10:
+	iaddq $-1, %rdx			# decrease len
+	#andq %rdx, %rdx     		# if len greater than zero
+	jle  Done			# jump to Done
+
+	mrmovq 16(%rdi), %rbx		# value is read from src
+	rmmovq %rbx, 16(%rsi)		# then it is stored to dst
+	andq %rbx, %rbx			# if value greater than zero
+	jle  N_11			# jump to N_11
+	iaddq $1, %rax			# increase count
+N_11:
+	iaddq $-1, %rdx			# decrease len
+	#andq %rdx, %rdx     		# if len greater than zero
+	jle  Done			# jump to Done
+
+	mrmovq 24(%rdi), %rbx		# value is read from src
+	rmmovq %rbx, 24(%rsi)		# then it is stored to dst
+	andq %rbx, %rbx			# if value greater than zero
+	jle  N_12			# jump to N_12
+	iaddq $1, %rax			# increase count
+N_12:
+	iaddq $-1, %rdx			# decrease len
+	#andq %rdx, %rdx   		# if len greater than zero
+	jle  Done			# jump to Done
+
+	mrmovq 32(%rdi), %rbx		# value is read from src
+	rmmovq %rbx, 32(%rsi)		# then it is stored to dst
+	andq %rbx, %rbx			# if value greater than zero
+	jle  N_13			# jump to N_13
+	iaddq $1, %rax			# increase count
+N_13:
+	iaddq $-1, %rdx			# decrease len
+	#andq %rdx, %rdx     		# if len greater than zero
+	jle  Done			# jump to Done
+
+	mrmovq 40(%rdi), %rbx		# value is read from src
+	rmmovq %rbx, 40(%rsi)		# then it is stored to dst
+	andq %rbx, %rbx			# if value greater than zero
+	jle  N_14			# jump to N_14
+	iaddq $1, %rax			# increase count
+	
+N_14:
+	iaddq $-1, %rdx			# decrease len
+	#andq %rdx, %rdx    		# if len greater than zero
+	jle  Done			# jump to Done
+	mrmovq 48(%rdi), %rbx		# value is read from src
+	rmmovq %rbx, 48(%rsi)		# then it is stored to dst
+	andq %rbx, %rbx			# if value greater than zero
+	jle  Done			# jump to Done
+	iaddq $1, %rax			# increase count
+
+##################################################################
+# Do not modify the following section of code
+# Function epilogue.
+Done:
+	ret
+##################################################################
+# Keep the following label at the end of your function
+End:
+#/* $end ncopy-ys */

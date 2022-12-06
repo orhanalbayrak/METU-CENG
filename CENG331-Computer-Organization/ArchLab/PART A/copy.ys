@@ -1,0 +1,80 @@
+#ORHAN ALBAYRAK
+#2264471
+.pos 0x1000
+
+Stack:
+
+	.pos 0 					#Execution should start from zero
+
+
+init:
+#Make rsp and rbp initialization 
+	irmovq 	Stack,%rsp  			# rsp setup
+	irmovq	Stack,%rbp			# rbp setup
+	call	Main				# The Main function is started 
+	halt					# Execution is finished 
+
+
+
+.align 8					# In 64 bit align is 8 for quadword	
+
+src:	#Source block
+	.quad 0x00a
+	.quad 0x0b0	
+	.quad 0xc00
+
+dest:	#Destination block
+	.quad 0x111
+	.quad 0x222
+	.quad 0x333
+
+Main:	#Define Main structure 
+	pushq %rbp 				# rbp(base pointer) is pushed into Stack 
+	rrmovq %rsp,%rbp			# move rsp(stack pointer) into rbp to save frame  value before call function
+	irmovq $4,%rax				# the constant value 4 is assigned to rax 
+	pushq %rax				# rax(constant value 4) is pushed into Stack
+	irmovq $3,%rax				# the constant value 3 is assigned to rax
+	pushq %rax				# rax(constant value 3) is pushed into Stack
+	irmovq dest,%rdx			# dest value is moved to rdx register
+	pushq %rdx      			# Pushing rdx register for moving dest into stack 
+	irmovq src,%rdx				# moving src(beginnign of the source block) value into rdx register
+	pushq %rdx      			# Pushing rdx register for moving src into stack
+	call copy_block				# Here I am calling the copy_block after passing arguments to this function.
+	rrmovq %rbp,%rsp			# I update rsp register as a value of rbp
+	popq %rbp				# Before returning the main function, we are popping rbp.
+	ret 					# The return statement here for ending mail function.
+
+copy_block:
+	pushq	%rbp				# Pushing Rbp register to determine frame base
+	rrmovq	%rsp, %rbp  			# Move rsp(stack pointer) into rbp
+	pushq	%rsi				# 2nd element
+	pushq	%rbx				# Initialize 2nd element
+	mrmovq	16(%rbp), %rbx		
+	mrmovq	24(%rbp), %rcx
+	mrmovq	32(%rbp), %rdx
+	irmovq	$0, %rsi
+	pushq   %rdi  				# 1th element
+	irmovq  $8, %rdi			# The constant value 4 is assigned to rdi register
+	andq	%rdx, %rdx			# If not rdx jump done
+	jle Done
+
+#Loop goes assign from src to dest block by block
+Loop:							
+	mrmovq	(%rbx), %rax	
+	addq	%rdi, %rbx
+	rmmovq	%rax, (%rcx)
+	addq	%rdi, %rcx
+	xorq	%rax, %rsi
+	irmovq  $1, %rdi
+	subq	%rdi, %rdx
+	irmovq  $8,%rdi
+	andq	%rdx, %rdx
+	jg	Loop
+Done:						# Finish after loop and  pop calee-seaved registers from stack 
+	rrmovq	%rsi, %rax
+	popq    %rdi
+	popq	%rbx
+	popq	%rsi
+	popq    %rbp 				# Finish execution and return
+	ret       
+ 		
